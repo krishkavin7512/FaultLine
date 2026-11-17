@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FaultLine · Which houses will an earthquake bring down?</title>
+  <meta name="description" content="760,000 houses surveyed after Nepal's 2015 earthquake. Trees, forests, boosting, a GAM and model averaging learn which ones fell, then predict three districts they never saw.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23ffcf33'/%3E%3Cpath d='M17 3l-5 12 7 2-6 12' fill='none' stroke='%231c1500' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,600..900&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body class="is-loading">
+  <div class="loader" id="loader" aria-hidden="true">
+    <div class="loader__inner">
+      <div class="loader__read"><span id="loaderN">7.8</span><small>magnitude</small></div>
+      <div class="loader__line"><i></i></div>
+      <div class="loader__meta"><span>25 April 2015 · 11:56</span><span>Gorkha, Nepal</span></div>
+    </div>
+  </div>
+  <div class="aurora" aria-hidden="true"><span></span><span></span></div>
+  <div class="gridlines" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="progress" id="progress"></div>
+
+  <header class="nav" id="nav">
+    <a href="#hero" class="brand" aria-label="FaultLine home"><span class="brand__mark"></span>FaultLine</a>
+    <nav class="nav__links" id="navLinks" aria-label="Sections">
+      <span class="nav__pill"></span>
+      <a href="#map">Map</a><a href="#checklist">Checklist</a><a href="#models">Models</a><a href="#compare">Compare</a><a href="#fragility">Fragility</a><a href="#house">Your house</a><a href="#grades">Grades</a><a href="#limits">Limits</a><a href="#inside">Inside</a>
+    </nav>
+    <div class="nav__cta"><a class="btn btn--sm" href="/graphs">Graphs</a></div>
+  </header>
+
+  <main>
+    <section class="hero" id="hero">
+      <div class="wrap hero__body">
+        <div class="hero__grid">
+          <div>
+            <span class="eyebrow" data-reveal>Ensemble learning on Nepal's 2015 earthquake</span>
+            <h1 class="hero__title" id="heroTitle">Which house falls next? <em>The last earthquake left the answer key.</em></h1>
+            <p class="lead hero__lead" data-reveal style="--d:300" id="heroLead">After the 2015 Gorkha earthquake, survey teams visited every house in the 11 worst-hit districts outside Kathmandu and graded its damage. FaultLine learns from that survey which houses fall, then predicts three whole districts it has never seen, including the one that held the epicentre.</p>
+            <div class="hero__actions" data-reveal style="--d:450">
+              <a class="btn btn--primary" href="#house" data-magnetic>Test a house <span class="arrow">→</span></a>
+              <a class="btn" href="#map" data-magnetic>See the damage map</a>
+            </div>
+          </div>
+          <div class="quake" data-reveal="scale" style="--d:200">
+            <canvas id="quakeCanvas" role="img" aria-label="Map of every surveyed ward. A wave spreads from the epicentre in Gorkha and each ward lights up with the share of its houses that were destroyed."></canvas>
+            <div class="quake__legend"><div>Share of houses destroyed<div class="quake__ramp"></div></div><div class="quake__clock" id="quakeClock">S-wave · 0 s</div></div>
+          </div>
+        </div>
+        <div class="hero__stats" id="heroStats" data-reveal style="--d:600"></div>
+      </div>
+      <div class="scroll-cue" aria-hidden="true"><span>Scroll</span><i></i></div>
+    </section>
+
+    <div class="marquee" aria-hidden="true"><div class="marquee__track" id="marquee"></div></div>
+
+    <section id="map">
+      <div class="wrap">
+        <div class="section-head">
+          <div><span class="eyebrow" data-reveal>01 · Ward by ward</span>
+            <h2 class="h2" data-reveal>What happened, what it forecast, <em>and what a bigger quake would do.</em></h2></div>
+          <p class="lead" data-reveal style="--d:150" id="mapLead"></p>
+        </div>
+        <div class="ctl-row" data-reveal>
+          <div class="seg" id="mapMode" role="tablist" aria-label="Map layer"><span class="tabs__pill"></span><button class="active" data-mode="actual">Real damage</button><button data-mode="model">Model forecast</button><button data-mode="diff">Real − forecast</button></div>
+        </div>
+        <div class="map-grid">
+          <div class="card" data-reveal><div class="plot map-plot" id="mapPlot"></div></div>
+          <div class="map-side" data-reveal style="--d:120">
+            <div class="card">
+              <div class="tag">If the ground shook harder or softer</div>
+              <label class="ctl" style="display:block;margin-top:12px"><span>Shift every ward's shaking <b id="shiftV">±0.00</b></span><input type="range" id="shift" min="0" max="8" step="1" value="4" aria-label="Shaking shift"></label>
+              <div class="bignum" style="margin-top:16px"><span id="shiftTotal">0</span><small>homes destroyed</small></div>
+              <div class="delta" id="shiftDelta"></div>
+              <p class="fine" id="shiftNote"></p>
+            </div>
+            <div class="card">
+              <div class="tag" id="legendTag">Share of houses destroyed</div>
+              <div class="ramp" id="legendRamp"></div>
+              <div class="ramp-l" id="legendL"><span>0%</span><span>50%</span><span>100%</span></div>
+              <div class="kv" id="mapKv"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="checklist">
+      <div class="wrap">
+        <div class="section-head">
+          <div><span class="eyebrow" data-reveal>02 · CART as a field tool</span>
+            <h2 class="h2" data-reveal id="ckTitle">A few questions <em>asked at the door.</em></h2></div>
+          <p class="lead" data-reveal style="--d:150" id="ckLead"></p>
+        </div>
+        <div class="card" data-reveal>
+          <div class="tag">The inspector's checklist · hover a rule to trace it</div>
+          <div class="ctree"><svg id="treeSvg" role="img" aria-label="Pruned decision tree with its questions and the share of houses destroyed at each leaf"></svg></div>
+          <div class="rules" id="rules"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="models">
+      <div class="wrap">
+        <div class="section-head">
+          <div><span class="eyebrow" data-reveal>03 · Combining models</span>
+            <h2 class="h2" data-reveal>One tree is a guess. <em>Many trees are a forecast.</em></h2></div>
+          <p class="lead" data-reveal style="--d:150" id="modelsLead"></p>
+        </div>
+        <div class="lineup" id="lineup"></div>
+        <div class="three">
+          <div class="card plot-card" data-reveal><div class="tag">Weak alone, strong together</div><div class="plot" id="pAlone"></div></div>
+          <div class="card plot-card" data-reveal style="--d:100"><div class="tag">Adding members</div><div class="plot" id="pGrowth"></div></div>
+          <div class="card plot-card" data-reveal style="--d:200"><div class="tag">One house, tree by tree (adaptive basis functions)</div><div class="plot" id="pBasis"></div></div>
+        </div>
+        <div class="three">
+          <div class="card plot-card" data-reveal><div class="tag">Stacking weights</div><div class="plot" id="pStack"></div></div>
+          <div class="card plot-card" data-reveal style="--d:100"><div class="tag">Bayesian model averaging across families</div><div class="plot" id="pFam"></div></div>
+          <div class="card plot-card" data-reveal style="--d:200"><div class="tag">BMA over 4,096 explanations</div><div class="plot" id="pIncl"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="compare">
+      <div class="wrap">
+        <div class="section-head">
+          <div><span class="eyebrow" data-reveal>04 · Comparative analysis</span>
+            <h2 class="h2" data-reveal id="cmpTitle">Every model, <em>on the same houses.</em></h2></div>
+          <p class="lead" data-reveal style="--d:150" id="cmpLead"></p>
+        </div>
+        <div class="card" data-reveal><div class="table-wrap"><table class="data" id="cmpTable"></table></div><p class="fine" id="cmpNote"></p></div>
+        <div class="two two--even" style="margin-top:18px">
+          <div class="card plot-card" data-reveal><div class="tag">Seen districts against held-out districts</div><div class="plot" id="pAuc" style="height:440px"></div></div>
+          <div class="card plot-card" data-reveal style="--d:120"><div class="tag">Which differences are real? 95% bootstrap intervals</div><div class="plot" id="pBoot" style="height:440px"></div></div>
+        </div>
+        <div id="verdicts"></div>
+      </div>
+    </section>
+
+    <section id="fragility">
+      <div class="wrap">
+        <div class="section-head">
+          <div><span class="eyebrow" data-reveal>05 · Same shaking, different fate</span>
+            <h2 class="h2" data-reveal>The walls decide <em>who walks out.</em></h2></div>
+          <p class="lead" data-reveal style="--d:150" id="fragLead"></p>
+        </div>
+        <div class="ctl-row" data-reveal>
+          <div class="seg" id="fragMode" role="tablist" aria-label="Fragility source"><span class="tabs__pill"></span><button class="active" data-mode="observed">Straight from the survey</button><button data-mode="model">Learned by the model</button></div>
+        </div>
+        <div class="two">
+          <div class="card plot-card" data-reveal><div class="tag" id="fragTag">Fragility curves</div><div class="plot" id="pFrag" style="height:420px"></div></div>
+          <div class="card plot-card" data-reveal style="--d:120"><div class="tag">What one change would do</div><div class="plot" id="pUp" style="height:300px"></div><p class="fine" id="upNote"></p></div>
+        </div>
+        <div class="two two--even" style="margin-top:18px">
+          <div class="card plot-card" data-reveal><div class="tag">Forecasting each district's losses</div><div class="plot" id="pDist" style="height:380px"></div></div>
+          <div class="card plot-card" data-reveal style="--d:120"><div class="tag">If a programme can reach only some houses</div><div class="plot" id="pCap" style="height:380px"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="house">
+      <div class="wrap">
+        <div class="section-head">
+          <div><span class="eyebrow" data-reveal>06 · Your house</span>
+            <h2 class="h2" data-reveal>Describe a house. <em>Every model votes.</em></h2></div>
+          <p class="lead" data-reveal style="--d:150">Set the facts a surveyor would record and how hard the ground shakes. Every model gives its probability that the house is destroyed, the GAM explains why, the checklist shows its path, and the combined model tests the upgrades that apply.</p>
+        </div>
+        <div class="chips" id="examples" data-reveal></div>
+        <div class="builder">
+          <div class="card" data-reveal>
+            <div class="tag">The house</div>
+            <div class="form" id="form"></div>
+          </div>
+          <div class="card" data-reveal style="--d:120" id="result">
+            <div class="result-top">
+              <div class="gauge" id="gauge"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="g-bg" cx="60" cy="60" r="50"/><circle class="g-fg" id="gArc" cx="60" cy="60" r="50" stroke-dasharray="314.16" stroke-dashoffset="314.16"/></svg><div class="gauge__v"><span id="gVal">–</span><small id="gLab">chance destroyed</small></div></div>
+              <div><div class="verbal" id="verbal">…</div><p class="fine" id="verbalNote"></p></div>
+            </div>
+            <div class="tag" style="margin-top:18px">Every model's answer</div>
+            <div class="spread" id="spread"></div>
+            <div class="spread__ax"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+            <div class="out-grid">
+              <div><div class="tag">Why · the GAM's breakdown</div><div class="why" id="why"></div></div>
+              <div><div class="tag">The checklist's path</div><ol class="steps" id="steps"></ol><p class="fine" id="stepsLeaf"></p></div>
+            </div>
+            <div class="out-grid">
+              <div><div class="tag">One change at a time</div><div class="ups" id="ups"></div></div>
+              <div><div class="tag">Risk as the shaking grows</div><div class="plot mini-plot" id="pCurve"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="grades">
+      <div class="wrap">
+        <div class="section-head">
+          <div><span class="eyebrow" data-reveal>07 · Five damage grades</span>
+            <h2 class="h2" data-reveal>From yes or no <em>to five grades.</em></h2></div>
+          <p class="lead" data-reveal style="--d:150" id="gradesLead"></p>
+        </div>
+        <div class="two two--even">
+          <div class="card plot-card" data-reveal><div class="tag">Accuracy on the held-out districts</div><div class="plot" id="pGrades" style="height:360px"></div></div>
+          <div class="card plot-card" data-reveal style="--d:120"><div class="tag">CART's five-grade confusion matrix</div><div class="plot" id="pConf" style="height:360px"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="limits">
+      <div class="wrap">
+        <span class="eyebrow" data-reveal>08 · What this cannot claim</span>
+        <h2 class="h2" data-reveal>Useful evidence. <em>Not a building code.</em></h2>
+        <div class="limits" id="limitsList"></div>
+      </div>
+    </section>
+
+    <section id="inside">
+      <div class="wrap">
+        <span class="eyebrow" data-reveal>09 · Inside</span>
+        <h2 class="h2" data-reveal>Every model, <em>written from scratch.</em></h2>
+        <p class="lead" data-reveal>All of it is NumPy with no modelling library behind it. scikit-learn appears only in the test suite, as a check that the from-scratch models agree with a standard implementation.</p>
+        <div class="grid-inside" id="insideGrid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer">
+    <div class="wrap">
+      <a class="mega-link" href="/graphs" data-reveal data-cursor="open">
+        <div class="mega-link__row">
+          <div class="mega-link__txt"><span class="roll"><span><b id="nGraphs">All</b> graphs,</span><span><b id="nGraphs2">All</b> graphs,</span></span><br><span class="roll"><span>each one explained.</span><span>each one explained.</span></span></div>
+          <div class="mega-link__arrow"><svg width="40%" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#eef0f2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        </div>
+      </a>
+      <div class="foot"><div>Data: Nepal's 2015 earthquake building survey, published through the government and Kathmandu Living Labs open data portal, via <a href="https://www.kaggle.com/datasets/sirorororo/nepal-earthquake-ward-level-intensities-and-impact" target="_blank" rel="noopener">Kaggle</a>.</div><div>Built from scratch with NumPy · FastAPI · Plotly · <a href="/docs" target="_blank" rel="noopener">API docs</a></div></div>
+    </div>
+  </footer>
+
+  <script src="/assets/vendor/plotly.min.js"></script>
+  <script type="module" src="/assets/js/main.js"></script>
+</body>
+</html>
