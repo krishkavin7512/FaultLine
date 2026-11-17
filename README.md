@@ -17,7 +17,7 @@ Trees, bagging, random forests, AdaBoost, gradient boosting, a GAM, stacking and
 
 <img src="docs/screenshots/hero.jpg" alt="FaultLine landing page" width="92%">
 
-**Live demo:** [https://faultline.vercel.app](https://faultline.vercel.app)<br>
+**Live demo:** [https://faultline-blush.vercel.app](https://faultline-blush.vercel.app)<br>
 [The idea](#idea) · [Results](#results) · [The comparison](#compare) · [How it works](#how) · [Models](#models) · [What it cannot claim](#limits) · [Screenshots](#screenshots) · [Run it](#run)
 
 </div>
